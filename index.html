@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prizeler</title>
+</head>
+<body>
+    <!-- Drag and drop overlay -->
+    <div class="drag-overlay" id="dragOverlay">
+        <div class="drag-message">
+            <div class="drag-icon">📁</div>
+            <h3>Drop JSON File Here</h3>
+            <p id="dragDropText">Release to load your data</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Prizeler</h1>
+            <p>Manage incentive prize packs for events, track eligible donations, and run prize drawings</p>
+        </div>
+
+        <div class="tab-navigation">
+            <button class="tab-button active" onclick="switchTab('prizepacks')">
+                <span>📦</span> Prize Packs
+            </button>
+            <button class="tab-button" onclick="switchTab('donations')">
+                <span>💰</span> Donations
+            </button>
+            <button class="tab-button" onclick="switchTab('drawings')">
+                <span>🎲</span> Drawings
+            </button>
+        </div>
+
+        <!-- Prize Packs Tab -->
+        <div id="prizepacks-tab" class="tab-content active">
+            <div class="controls">
+                <button class="btn btn-success" onclick="addNewPrizePack()">
+                    <span>+</span> Add New Prize Pack
+                </button>
+                
+                <div class="file-input-wrapper">
+                    <button class="btn" onclick="document.getElementById('prizepackFileInput').click()">
+                        <span>📁</span> Load JSON File
+                    </button>
+                    <input type="file" id="prizepackFileInput" accept=".json" onchange="loadPrizePackFile(event)">
+                </div>
+                
+                <button class="btn btn-secondary" onclick="exportPrizePackData()">
+                    <span>💾</span> Save as JSON
+                </button>
+                
+                <button class="btn btn-danger" onclick="clearAllPrizePacks()">
+                    <span>🗑️</span> Clear All
+                </button>
+
+                <div class="search-bar">
+                    <input type="text" id="prizepackSearchInput" placeholder="Search prize packs..." onkeyup="filterPrizePacks()">
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="stats" id="prizepackStats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalPacks">0</div>
+                        <div class="stat-label">Total Prize Packs</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalDraws">0</div>
+                        <div class="stat-label">Total Draws</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="multiEntryPacks">0</div>
+                        <div class="stat-label">Multi-Entry Packs</div>
+                    </div>
+                </div>
+
+                <div class="grid" id="prizePackGrid">
+                    <!-- Prize packs will be rendered here -->
+                </div>
+
+                <div class="empty-state" id="prizepackEmptyState" style="display: none;">
+                    <div class="empty-state-icon">📦</div>
+                    <h3>No Prize Packs Found</h3>
+                    <p>Create your first prize pack to get started!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Donations Tab -->
+        <div id="donations-tab" class="tab-content">
+            <div class="controls">
+                <button class="btn btn-success" onclick="addNewDonation()">
+                    <span>+</span> Add New Donation
+                </button>
+                
+                <div class="file-input-wrapper">
+                    <button class="btn btn-orange" onclick="document.getElementById('donationFileInput').click()">
+                        <span>📁</span> Load JSON File
+                    </button>
+                    <input type="file" id="donationFileInput" accept=".json" onchange="loadDonationFile(event)">
+                </div>
+                
+                <button class="btn btn-secondary" onclick="exportDonationData()">
+                    <span>💾</span> Save as JSON
+                </button>
+
+                <button class="btn btn-info" onclick="showUserSummary()">
+                    <span>👥</span> User Summary
+                </button>
+                
+                <button class="btn btn-danger" onclick="clearAllDonations()">
+                    <span>🗑️</span> Clear All
+                </button>
+
+                <div class="search-bar">
+                    <input type="text" id="donationSearchInput" placeholder="Search donations..." onkeyup="filterDonations()">
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <div class="date-filter">
+                    <label>From:</label>
+                    <input type="date" id="dateFrom" onchange="filterDonations()">
+                    <label>To:</label>
+                    <input type="date" id="dateTo" onchange="filterDonations()">
+                    <button class="btn btn-secondary" onclick="clearDateFilter()">Clear Dates</button>
+                </div>
+                <div>
+                    <label for="amountFilter">Min Amount: $</label>
+                    <input type="number" id="amountFilter" min="0" step="0.01" placeholder="0.00" onchange="filterDonations()" style="width: 100px;">
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="stats" id="donationStats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalDonations">0</div>
+                        <div class="stat-label">Total Donations</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalAmount">$0.00</div>
+                        <div class="stat-label">Total Amount</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="uniqueDonors">0</div>
+                        <div class="stat-label">Unique Donors</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="averageAmount">$0.00</div>
+                        <div class="stat-label">Average Donation</div>
+                    </div>
+                </div>
+
+                <div class="grid" id="donationsGrid">
+                    <!-- Donations will be rendered here -->
+                </div>
+
+                <div class="empty-state" id="donationEmptyState" style="display: none;">
+                    <div class="empty-state-icon">💰</div>
+                    <h3>No Donations Found</h3>
+                    <p>Add your first donation to get started!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drawings Tab -->
+        <div id="drawings-tab" class="tab-content">
+            <div class="controls">
+                <button class="btn btn-success" onclick="runAllDrawings()" id="runAllDrawingsBtn">
+                    <span>🎲</span> Run All Drawings
+                </button>
+                
+                <button class="btn" onclick="resetAllDrawings()" id="resetDrawingsBtn">
+                    <span>🔄</span> Reset All
+                </button>
+                
+                <button class="btn btn-info" onclick="showDrawingHistory()">
+                    <span>📋</span> Drawing History
+                </button>
+
+                <div class="search-bar">
+                    <select id="drawingPackFilter" onchange="filterAvailablePacks()">
+                        <option value="">All Prize Packs</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="availableDrawings">0</div>
+                        <div class="stat-label">Available Drawings</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalEligibleDonors">0</div>
+                        <div class="stat-label">Eligible Donors</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="completedDrawings">0</div>
+                        <div class="stat-label">Completed Drawings</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalPrizeValue">$0</div>
+                        <div class="stat-label">Total Prize Value</div>
+                    </div>
+                </div>
+
+                <div id="drawing-interface" style="display: none;">
+                    <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, #4CAF50, #45a049); color: white;">
+                        <h3 style="margin-bottom: 15px;">🎲 Active Drawing Session</h3>
+                        <div id="current-drawing-info"></div>
+                        <div style="margin-top: 15px;">
+                            <button class="btn" style="background: white; color: #4CAF50;" onclick="conductDrawing()">
+                                <span>🎯</span> Conduct Drawing
+                            </button>
+                            <button class="btn btn-secondary" onclick="cancelDrawing()">
+                                <span>❌</span> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="drawing-results" style="display: none;">
+                    <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, #FF9800, #F57C00); color: white;">
+                        <h3 style="margin-bottom: 15px;">🏆 Drawing Results</h3>
+                        <div id="drawing-winners"></div>
+                        <div style="margin-top: 15px;">
+                            <button class="btn" style="background: white; color: #FF9800;" onclick="saveDrawingResults()">
+                                <span>💾</span> Export Results as .CSV
+                            </button>
+                            <button class="btn btn-secondary" onclick="startNewDrawing()">
+                                <span>🎲</span> New Drawing
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid" id="availableDrawingsGrid">
+                    <!-- Available drawings will be rendered here -->
+                </div>
+
+                <div class="empty-state" id="drawingEmptyState" style="display: none;">
+                    <div class="empty-state-icon">🎲</div>
+                    <h3>No Prize Packs Available for Drawing</h3>
+                    <p>Import prize pack and donation data to start running drawings!</p>
+                    <div style="margin-top: 20px;">
+                        <button class="btn" onclick="loadSampleData()" style="background: #4CAF50;">
+                            📁 Load Sample Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prize Pack Edit Modal -->
+    <div class="modal" id="prizepackEditModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Prize Pack</h2>
+                <button class="close-btn" onclick="closePrizePackModal()">&times;</button>
+            </div>
+            <form id="prizepackEditForm">
+                <div class="form-group">
+                    <label for="editPack">Pack ID:</label>
+                    <input type="text" id="editPack" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editBlock">Block:</label>
+                        <input type="text" id="editBlock" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editBlockName">Block Name:</label>
+                        <input type="text" id="editBlockName" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editItemDescription">Item Description:</label>
+                    <textarea id="editItemDescription" required></textarea>
+                </div>
+
+                <div class="date-time-grid">
+                    <div class="form-group">
+                        <label for="editStartDate">Start Date & Time (Local):</label>
+                        <input type="datetime-local" id="editStartDate" required>
+                        <small style="color: #666; font-size: 0.8rem;">Will be stored as UTC</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="editEndDate">End Date & Time (Local):</label>
+                        <input type="datetime-local" id="editEndDate">
+                        <small style="color: #666; font-size: 0.8rem;">Will be stored as UTC</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editMinEntryDollars">Min Entry Dollars:</label>
+                        <input type="text" id="editMinEntryDollars" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDraws">Number of Draws:</label>
+                        <input type="number" id="editDraws" min="1" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="editMultientry">
+                        <label for="editMultientry">Allow Multiple Entries</label>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closePrizePackModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Donation Edit Modal -->
+    <div class="modal" id="donationEditModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Donation</h2>
+                <button class="close-btn" onclick="closeDonationModal()">&times;</button>
+            </div>
+            <form id="donationEditForm">
+                <div class="form-group">
+                    <label for="editTime">Donation Time (Local):</label>
+                    <input type="datetime-local" id="editTime" required>
+                    <small style="color: #666; font-size: 0.8rem;">Will be stored as UTC</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="editScreenName">Screen Name:</label>
+                    <input type="text" id="editScreenName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editEmail">Email:</label>
+                    <input type="email" id="editEmail" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editUserId">User ID:</label>
+                        <input type="number" id="editUserId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editAmount">Amount ($):</label>
+                        <input type="number" id="editAmount" min="0.01" step="0.01" required>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeDonationModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Summary Modal -->
+    <div class="modal" id="userSummaryModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 class="modal-title">User Summary</h2>
+                <button class="close-btn" onclick="closeUserSummary()">&times;</button>
+            </div>
+            <div id="userSummaryContent">
+                <!-- User summary will be populated here -->
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
