@@ -520,7 +520,7 @@ function renderDonations() {
 function updateDonationStats() {
     const totalDonations = donations.length;
     const totalAmount = donations.reduce((sum, donation) => sum + donation.amount, 0);
-    const uniqueDonors = new Set(donations.map(d => d.userId)).size;
+    const uniqueDonors = new Set(donations.map(d => d.email)).size;
     const averageAmount = totalDonations > 0 ? totalAmount / totalDonations : 0;
 
     document.getElementById('totalDonations').textContent = totalDonations;
@@ -664,8 +664,8 @@ function showUserSummary() {
     const userStats = {};
     
     donations.forEach(donation => {
-        if (!userStats[donation.userId]) {
-            userStats[donation.userId] = {
+        if (!userStats[donation.email]) {
+            userStats[donation.email] = {
                 screenName: donation.screenName,
                 email: donation.email,
                 totalAmount: 0,
@@ -674,9 +674,9 @@ function showUserSummary() {
             };
         }
         
-        userStats[donation.userId].totalAmount += donation.amount;
-        userStats[donation.userId].donationCount++;
-        userStats[donation.userId].donations.push(donation);
+        userStats[donation.email].totalAmount += donation.amount;
+        userStats[donation.email].donationCount++;
+        userStats[donation.email].donations.push(donation);
     });
 
     const sortedUsers = Object.entries(userStats)
@@ -687,7 +687,7 @@ function showUserSummary() {
     if (sortedUsers.length === 0) {
         html += '<p style="text-align: center; color: #666;">No donations to summarize.</p>';
     } else {
-        sortedUsers.forEach(([userId, stats]) => {
+        sortedUsers.forEach(([email, stats]) => {
             html += `
                 <div class="user-summary">
                     <h4>${stats.screenName} (ID: ${userId})</h4>
@@ -737,7 +737,7 @@ function doDrawing(drawingInfo, donors) {
                 winners.push(winner);
                 console.log("Winner of Multi-Entry Drawing:", JSON.stringify(winner));
                 // Remove the winner from the list to prevent multiple wins in the same drawing
-                eligibleDonors = eligibleDonors.filter(user => user.userId !== winner.userId);
+                eligibleDonors = eligibleDonors.filter(user => user.email !== winner.email);
             } else {
                 console.log("No eligible donors for multi-entry drawing.");
                 break;
@@ -755,7 +755,7 @@ function doDrawing(drawingInfo, donors) {
                 winners.push(winner);
                 console.log("Winner of Cumulative Drawing:", JSON.stringify(winner));
                 // Remove winner to prevent multiple wins
-                eligibleDonors = eligibleDonors.filter(user => user.userId !== winner.userId);
+                eligibleDonors = eligibleDonors.filter(user => user.email !== winner.email);
             } else {
                 console.log("No eligible donors for cumulative drawing.");
                 break;
@@ -784,7 +784,7 @@ function getEligibleCumulative(donations, drawingInfo) {
     // Aggregate the valid donations by userId to get a total for the block
     const aggregatedDonations = [];
     validDonations.forEach(donation => {
-        const existingUser = aggregatedDonations.find(user => user.userId === donation.userId);
+        const existingUser = aggregatedDonations.find(user => user.email === donation.email);
         if (existingUser) {
             existingUser.totalAmount += donation.amount;
         } else {
@@ -824,7 +824,7 @@ function getMultiEligible(donations, drawingInfo) {
     // Aggregate the valid donations by userId to get a total for the block
     const aggregatedDonations = [];
     validDonations.forEach(donation => {
-        const existingUser = aggregatedDonations.find(user => user.userId === donation.userId);
+        const existingUser = aggregatedDonations.find(user => user.email === donation.email);
         if (existingUser) {
             existingUser.amount += donation.amount;
         } else {
