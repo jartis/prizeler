@@ -170,6 +170,20 @@ function isValidDateTime(dateTime) {
     }
 }
 
+// Helper function to filter donations by email if the filter is enabled
+function applyEmailFilter(donationData) {
+    const filterByEmail = document.getElementById('filterByEmail');
+    if (filterByEmail && filterByEmail.checked) {
+        return donationData.filter(donation => {
+            return donation.email && 
+                   donation.email.trim() !== '' && 
+                   donation.email !== null && 
+                   donation.email !== undefined;
+        });
+    }
+    return donationData;
+}
+
 // Enhanced validation with user-friendly error reporting
 function validateAndShowErrors(data, schema, dataType) {
     const validation = validateData(data, schema);
@@ -213,7 +227,7 @@ async function loadSampleData() {
         
         // Update global arrays
         prizePacks = samplePrizePacks;
-        donations = sampleDonations;
+        donations = applyEmailFilter(sampleDonations);
         
         // Auto-save
         localStorage.setItem('prizePacks', JSON.stringify(prizePacks));
@@ -573,6 +587,65 @@ function closeDonationModal() {
     currentEditType = null;
 }
 
+// Function to handle email filter checkbox changes
+function handleEmailFilterChange() {
+    const checkbox = document.getElementById('filterByEmail');
+    
+    if (donations.length > 0) {
+        // Apply the email filter to existing donations
+        const originalCount = donations.length;
+        
+        if (checkbox.checked) {
+            // Get all donations from localStorage to reapply filter
+            const savedDonations = localStorage.getItem('donations');
+            if (savedDonations) {
+                try {
+                    const allDonations = JSON.parse(savedDonations);
+                    donations = applyEmailFilter(allDonations);
+                    const filteredCount = donations.length;
+                    
+                    renderDonations();
+                    updateDonationStats();
+                    
+                    if (originalCount !== filteredCount) {
+                        alert(`Email filter applied! ${originalCount - filteredCount} donations with empty emails were filtered out.`);
+                    } else {
+                        alert('Email filter applied! No donations were filtered out (all donations have valid emails).');
+                    }
+                } catch (e) {
+                    console.error('Error reapplying email filter:', e);
+                    alert('Email filter enabled for future data loads.');
+                }
+            } else {
+                alert('Email filter enabled. This will filter out donations with empty emails when you next load data.');
+            }
+        } else {
+            // Restore all donations when filter is disabled
+            const savedDonations = localStorage.getItem('donations');
+            if (savedDonations) {
+                try {
+                    donations = JSON.parse(savedDonations);
+                    renderDonations();
+                    updateDonationStats();
+                    alert('Email filter disabled. All donations restored.');
+                } catch (e) {
+                    console.error('Error restoring donations:', e);
+                }
+            }
+        }
+    } else {
+        // No donations loaded yet
+        if (checkbox.checked) {
+            alert('Email filter enabled. This will filter out donations with empty emails when you load data.');
+        } else {
+            alert('Email filter disabled.');
+        }
+    }
+    
+    // Continue with normal display filtering for other filters
+    filterDonations();
+}
+
 function filterDonations() {
     const searchTerm = document.getElementById('donationSearchInput').value.toLowerCase();
     const dateFrom = document.getElementById('dateFrom').value;
@@ -621,10 +694,18 @@ function loadDonationFile(event) {
                 
                 // Validate against schema
                 if (validateAndShowErrors(data, donationsSchema, 'Donations')) {
-                    donations = data;
+                    // Apply email filter if enabled
+                    const filteredData = applyEmailFilter(data);
+                    donations = filteredData;
                     renderDonations();
                     updateDonationStats();
-                    alert(`✅ Donations loaded and validated successfully! Loaded ${data.length} donation(s).`);
+                    
+                    const originalCount = data.length;
+                    const filteredCount = filteredData.length;
+                    const filterMessage = originalCount !== filteredCount ? 
+                        ` (${originalCount - filteredCount} donations with empty emails were filtered out)` : '';
+                    
+                    alert(`✅ Donations loaded and validated successfully! Loaded ${filteredCount} donation(s)${filterMessage}.`);
                 }
             } else {
                 alert('Invalid file format. Please select a valid JSON file with an array of donations.');
@@ -1507,7 +1588,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const savedDonations = localStorage.getItem('donations');
     if (savedDonations) {
         try {
-            donations = JSON.parse(savedDonations);
+            const parsedDonations = JSON.parse(savedDonations);
+            donations = applyEmailFilter(parsedDonations);
         } catch (e) {
             console.error('Error loading saved donations:', e);
         }
