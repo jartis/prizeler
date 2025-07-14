@@ -27,13 +27,13 @@
       },
       "startDate": {
         "type": "string",
-        "format": "date-time",
-        "description": "ISO 8601 timestamp when the prize pack becomes available"
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}[ T]\\d{2}:\\d{2}:\\d{2}$",
+        "description": "Timestamp when the prize pack becomes available (YYYY-MM-DD HH:MM:SS or YYYY-MM-DDTHH:MM:SS)"
       },
       "endDate": {
         "type": "string",
-        "format": "date-time",
-        "description": "ISO 8601 timestamp when the prize pack ends"
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}[ T]\\d{2}:\\d{2}:\\d{2}$",
+        "description": "Timestamp when the prize pack ends (YYYY-MM-DD HH:MM:SS or YYYY-MM-DDTHH:MM:SS)"
       },
       "itemDescription": {
         "type": "string",
