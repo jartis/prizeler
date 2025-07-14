@@ -104,7 +104,7 @@ module.exports = (env, argv) => {
                 'saveAllDrawingResults', 'showDrawingHistory', 'conductSingleDrawing',
                 'resetSingleDrawing', 'closePrizePackModal', 'closeDonationModal',
                 'closeUserSummary', 'conductDrawing', 'cancelDrawing', 'saveDrawingResults',
-                'startNewDrawing'
+                'startNewDrawing', 'updateSingleDrawingInResults', 'handleEmailFilterChange'
               ]
             },
             format: {

@@ -1415,6 +1415,7 @@ function conductSingleDrawing(packId) {
     autoSave();
     renderAvailableDrawings();
     updateDrawingStats();
+    updateSingleDrawingInResults(packId); // Update the all-drawings display
 }
 
 function resetSingleDrawing(packId) {
@@ -1422,6 +1423,7 @@ function resetSingleDrawing(packId) {
     delete drawingStates[packId];
     renderAvailableDrawings();
     updateDrawingStats();
+    updateSingleDrawingInResults(packId); // Update the all-drawings display
 }
 
 function resetAllDrawings() {
@@ -1525,6 +1527,95 @@ function saveAllDrawingResults() {
 
     document.getElementById('drawing-interface').style.display = 'none';
     document.getElementById('drawing-results').style.display = 'block';
+}
+
+// Function to update a single drawing result in the all-drawings display
+function updateSingleDrawingInResults(packId) {
+    const resultsSection = document.getElementById('drawing-results');
+    const winnersContainer = document.getElementById('drawing-winners');
+    
+    // Only update if the results section is currently visible
+    if (!resultsSection || resultsSection.style.display !== 'block' || !winnersContainer) {
+        return;
+    }
+
+    // Get all current drawn results to recalculate summary
+    const drawnResults = Object.values(allDrawingResults).filter(result => 
+        drawingStates[result.pack.pack] === 'drawn'
+    );
+
+    if (drawnResults.length === 0) {
+        // No more drawn results, hide the results section
+        resultsSection.style.display = 'none';
+        document.getElementById('drawing-interface').style.display = 'none';
+        document.getElementById('availableDrawingsGrid').style.display = 'grid';
+        return;
+    }
+
+    // Separate results with winners from those with no eligible entries
+    const resultsWithWinners = drawnResults.filter(result => result.winners.length > 0);
+    const resultsWithNoEligible = drawnResults.filter(result => result.winners.length === 0);
+    const totalWinners = drawnResults.reduce((sum, result) => sum + result.winners.length, 0);
+
+    // Recreate the results HTML for all drawings
+    const resultsHtml = drawnResults
+        .sort((a, b) => {
+            // Sort by status: successful drawings first, then no eligible
+            if (a.status === 'drawn' && b.status === 'no_eligible') return -1;
+            if (a.status === 'no_eligible' && b.status === 'drawn') return 1;
+            return a.pack.blockName.localeCompare(b.pack.blockName);
+        })
+        .map(result => {
+            if (result.status === 'no_eligible' || result.winners.length === 0) {
+                return `
+                    <div style="background: rgba(255,193,7,0.1); padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #ff9800;">
+                        <h4 style="margin: 0 0 10px 0; color: #333; font-weight: bold;">${result.pack.blockName} (${result.pack.pack})</h4>
+                        <div style="background: rgba(255,152,0,0.1); padding: 10px; border-radius: 6px;">
+                            <strong>⚠️ No Eligible Entries</strong><br>
+                            <div style="color: #e65100; margin-top: 8px;">
+                                No donors met the minimum entry requirement of $${result.pack.minEntryDollars} for this prize pack.
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.9rem; opacity: 0.8;">
+                            <strong>Prize:</strong> ${result.pack.itemDescription}<br>
+                            <strong>Min Entry:</strong> $${result.pack.minEntryDollars} | 
+                            <strong>Type:</strong> ${result.pack.multientry ? 'Multi-entry' : 'Cumulative'}
+                        </div>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #4CAF50;">
+                        <h4 style="margin: 0 0 10px 0; color: #333; font-weight: bold;">${result.pack.blockName} (${result.pack.pack})</h4>
+                        <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 6px;">
+                            <strong>🏆 Winners (${result.winners.length}):</strong><br>
+                            ${result.winners.map(w => `
+                                <div style="background: rgba(76,175,80,0.2); padding: 8px; border-radius: 4px; margin: 4px 0; color: #2e7d32;">
+                                    <strong>${w.screenName}</strong> - ${w.email}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.9rem; opacity: 0.8;">
+                            <strong>Prize:</strong> ${result.pack.itemDescription}<br>
+                            <strong>Eligible Entries:</strong> ${result.eligibleCount} | 
+                            <strong>Type:</strong> ${result.pack.multientry ? 'Multi-entry' : 'Cumulative'}
+                        </div>
+                    </div>
+                `;
+            }
+        }).join('');
+    
+    // Update the entire display with refreshed data
+    winnersContainer.innerHTML = `
+        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <h4>🎉 All Drawings Complete! (Updated: ${new Date().toLocaleString()})</h4>
+            <p><strong>Total Packs Processed:</strong> ${drawnResults.length}</p>
+            <p><strong>Successful Drawings:</strong> ${resultsWithWinners.length}</p>
+            <p><strong>Packs with No Eligible Entries:</strong> ${resultsWithNoEligible.length}</p>
+            <p><strong>Total Winners:</strong> ${totalWinners}</p>
+        </div>
+        ${resultsHtml}
+    `;
 }
 
 // Legacy function updates for compatibility
@@ -1734,3 +1825,6 @@ window.saveDrawingResults = saveDrawingResults;
 window.startNewDrawing = startNewDrawing;
 window.conductSingleDrawing = conductSingleDrawing;
 window.resetSingleDrawing = resetSingleDrawing;
+window.handleEmailFilterChange = handleEmailFilterChange;
+window.filterDonations = filterDonations;
+window.filterPrizePacks = filterPrizePacks;
