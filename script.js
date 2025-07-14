@@ -1145,9 +1145,14 @@ function renderAvailableDrawings() {
         } else if (packState === 'drawn') {
             statusBadge = '<div style="background: #fff3e0; color: #e65100; padding: 4px 8px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 5px;">Drawn</div>';
             actionButton = `
-                <button class="btn btn-secondary" style="width: 100%" onclick="resetSingleDrawing('${pack.pack}')">
-                    🔄 Reset Drawing
-                </button>
+                <div style="display: flex; gap: 5px; width: 100%;">
+                    <button class="btn" style="flex: 1; background: #4CAF50; color: white;" onclick="redrawSingleDrawing('${pack.pack}')">
+                        🎲 Redraw
+                    </button>
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="resetSingleDrawing('${pack.pack}')">
+                        🔄 Reset
+                    </button>
+                </div>
             `;
             if (packResults && packResults.winners) {
                 resultSection = `
@@ -1160,9 +1165,14 @@ function renderAvailableDrawings() {
         } else if (packState === 'saved') {
             statusBadge = '<div style="background: #e8f5e8; color: #2e7d32; padding: 4px 8px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 5px;">Saved</div>';
             actionButton = `
-                <button class="btn btn-secondary" style="width: 100%" onclick="resetSingleDrawing('${pack.pack}')">
-                    🔄 Reset Drawing
-                </button>
+                <div style="display: flex; gap: 5px; width: 100%;">
+                    <button class="btn" style="flex: 1; background: #4CAF50; color: white;" onclick="redrawSingleDrawing('${pack.pack}')">
+                        🎲 Redraw
+                    </button>
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="resetSingleDrawing('${pack.pack}')">
+                        🔄 Reset
+                    </button>
+                </div>
             `;
             if (packResults && packResults.winners) {
                 resultSection = `
@@ -1307,6 +1317,12 @@ function runAllDrawings() {
                                 <strong>Min Entry:</strong> $${result.pack.minEntryDollars} | 
                                 <strong>Type:</strong> ${result.pack.multientry ? 'Multi-entry' : 'Cumulative'}
                             </div>
+                            <div style="margin-top: 15px; text-align: center;">
+                                <button onclick="redrawSingleDrawing('${result.pack.pack}')" 
+                                        style="background: #ff9800; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                    🎲 Redraw
+                                </button>
+                            </div>
                         </div>
                     `;
                 } else {
@@ -1325,6 +1341,12 @@ function runAllDrawings() {
                                 <strong>Prize:</strong> ${result.pack.itemDescription}<br>
                                 <strong>Eligible Entries:</strong> ${result.eligibleCount} | 
                                 <strong>Type:</strong> ${result.pack.multientry ? 'Multi-entry' : 'Cumulative'}
+                            </div>
+                            <div style="margin-top: 15px; text-align: center;">
+                                <button onclick="redrawSingleDrawing('${result.pack.pack}')" 
+                                        style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                    🎲 Redraw
+                                </button>
                             </div>
                         </div>
                     `;
@@ -1395,6 +1417,45 @@ function resetSingleDrawing(packId) {
     renderAvailableDrawings();
     updateDrawingStats();
     updateSingleDrawingInResults(packId); // Update the all-drawings display
+}
+
+function redrawSingleDrawing(packId) {
+    const pack = prizePacks.find(p => p.pack === packId);
+    if (!pack) {
+        alert('Prize pack not found.');
+        return;
+    }
+
+    const eligibleCount = pack.multientry ? 
+        getMultiEligible(donations, pack).length : 
+        getEligibleCumulative(donations, pack).length;
+
+    if (eligibleCount === 0) {
+        alert('No eligible donors for this prize pack.');
+        return;
+    }
+
+    // Clear existing results
+    delete allDrawingResults[packId];
+    delete drawingStates[packId];
+
+    // Immediately run a new drawing
+    const results = doDrawing(pack, donations);
+    allDrawingResults[packId] = {
+        pack: pack,
+        winners: results.winners,
+        timestamp: new Date().toISOString(),
+        eligibleCount: results.eligibleCount
+    };
+    drawingStates[packId] = 'drawn';
+
+    autoSave();
+    renderAvailableDrawings();
+    updateDrawingStats();
+    updateSingleDrawingInResults(packId);
+    
+    // Show a brief notification
+    console.log(`Redraw completed for ${pack.blockName}: ${results.winners.length} winner(s) selected`);
 }
 
 function resetAllDrawings() {
@@ -1552,6 +1613,12 @@ function updateSingleDrawingInResults(packId) {
                             <strong>Min Entry:</strong> $${result.pack.minEntryDollars} | 
                             <strong>Type:</strong> ${result.pack.multientry ? 'Multi-entry' : 'Cumulative'}
                         </div>
+                        <div style="margin-top: 15px; text-align: center;">
+                            <button onclick="redrawSingleDrawing('${result.pack.pack}')" 
+                                    style="background: #ff9800; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                🎲 Try Redraw
+                            </button>
+                        </div>
                     </div>
                 `;
             } else {
@@ -1570,6 +1637,12 @@ function updateSingleDrawingInResults(packId) {
                             <strong>Prize:</strong> ${result.pack.itemDescription}<br>
                             <strong>Eligible Entries:</strong> ${result.eligibleCount} | 
                             <strong>Type:</strong> ${result.pack.multientry ? 'Multi-entry' : 'Cumulative'}
+                        </div>
+                        <div style="margin-top: 15px; text-align: center;">
+                            <button onclick="redrawSingleDrawing('${result.pack.pack}')" 
+                                    style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                🎲 Redraw
+                            </button>
                         </div>
                     </div>
                 `;
@@ -1796,6 +1869,7 @@ window.saveDrawingResults = saveDrawingResults;
 window.startNewDrawing = startNewDrawing;
 window.conductSingleDrawing = conductSingleDrawing;
 window.resetSingleDrawing = resetSingleDrawing;
+window.redrawSingleDrawing = redrawSingleDrawing;
 window.handleEmailFilterChange = handleEmailFilterChange;
 window.filterDonations = filterDonations;
 window.filterPrizePacks = filterPrizePacks;
