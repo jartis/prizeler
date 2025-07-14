@@ -1110,19 +1110,8 @@ function renderAvailableDrawings() {
     const grid = document.getElementById('availableDrawingsGrid');
     const emptyState = document.getElementById('drawingEmptyState');
     
-    // Filter prize packs that are available for drawing
-    const now = new Date();
-    const availablePacks = prizePacks.filter(pack => {
-        const startDate = new Date(pack.startDate);
-        const endDate = pack.endDate ? new Date(pack.endDate) : new Date(Date.now() + 365*24*60*60*1000);
-        
-        // Show packs that are either currently active, or recently ended (within 30 days)
-        // This allows for some flexibility while still respecting date boundaries
-        const thirtyDaysAgo = new Date(now.getTime() - 30*24*60*60*1000);
-        const thirtyDaysFromNow = new Date(now.getTime() + 30*24*60*60*1000);
-        
-        return (startDate <= thirtyDaysFromNow && endDate >= thirtyDaysAgo);
-    });
+    // Show all prize packs (no date filtering)
+    const availablePacks = prizePacks;
     
     if (availablePacks.length === 0) {
         grid.innerHTML = '';
@@ -1227,17 +1216,8 @@ function renderAvailableDrawings() {
 }
 
 function updateDrawingStats() {
-    const now = new Date();
-    const availablePacks = prizePacks.filter(pack => {
-        const startDate = new Date(pack.startDate);
-        const endDate = pack.endDate ? new Date(pack.endDate) : new Date(Date.now() + 365*24*60*60*1000);
-        
-        // Show packs that are either currently active, or recently ended (within 30 days)
-        const thirtyDaysAgo = new Date(now.getTime() - 30*24*60*60*1000);
-        const thirtyDaysFromNow = new Date(now.getTime() + 30*24*60*60*1000);
-        
-        return (startDate <= thirtyDaysFromNow && endDate >= thirtyDaysAgo);
-    });
+    // Show all prize packs (no date filtering)
+    const availablePacks = prizePacks;
 
     const totalEligible = availablePacks.reduce((sum, pack) => {
         return sum + (pack.multientry ? 
@@ -1256,17 +1236,8 @@ function updateDrawingStats() {
 
 // New Drawing Functions for Multiple Pack Management
 function runAllDrawings() {
-    const now = new Date();
-    const availablePacks = prizePacks.filter(pack => {
-        const startDate = new Date(pack.startDate);
-        const endDate = pack.endDate ? new Date(pack.endDate) : new Date(Date.now() + 365*24*60*60*1000);
-        
-        // Show packs that are either currently active, or recently ended (within 30 days)
-        const thirtyDaysAgo = new Date(now.getTime() - 30*24*60*60*1000);
-        const thirtyDaysFromNow = new Date(now.getTime() + 30*24*60*60*1000);
-        
-        return (startDate <= thirtyDaysFromNow && endDate >= thirtyDaysAgo);
-    });
+    // Show all prize packs (no date filtering)
+    const availablePacks = prizePacks;
 
     if (availablePacks.length === 0) {
         alert('No prize packs available for drawing.');
